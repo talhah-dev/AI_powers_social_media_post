@@ -6,7 +6,7 @@ function jsonError(message: string, status = 400) {
   return Response.json({ ok: false, error: message }, { status });
 }
 
-type PostType = "feed" | "carousel" | "story" | "reel";
+type PostType = "feed" | "story" | "reel";
 
 export async function POST(request: Request) {
   if (!ZERNIO_API_KEY) {
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   let body: {
     content?: string;
-    mediaItems?: Array<{ type: string; url: string }>;
+    mediaUrl?: string;
     postType?: PostType;
     publishNow?: boolean;
   };
@@ -34,7 +34,12 @@ export async function POST(request: Request) {
 
   const payload = {
     content: body.content ?? "",
-    mediaItems: body.mediaItems ?? [],
+    mediaItems: [
+      {
+        type: inferMediaType(body.mediaUrl ?? "", postType),
+        url: body.mediaUrl ?? "",
+      },
+    ],
     platforms: [
       {
         platform: "instagram",
@@ -75,6 +80,14 @@ export async function POST(request: Request) {
         "Content-Type":
           upstreamResponse.headers.get("content-type") ?? "text/plain; charset=utf-8",
       },
-    });
+  });
+}
+
+function inferMediaType(url: string, postType: PostType) {
+  if (postType === "reel" || /\.(mp4|mov|webm)(\?|#|$)/i.test(url)) {
+    return "video";
   }
+
+  return "image";
+}
 }
