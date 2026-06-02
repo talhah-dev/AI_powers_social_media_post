@@ -12,12 +12,13 @@ import { toast } from "sonner";
 
 export default function AuthPage() {
 
-    const [loading, setLoading] = useState(false);
+    const [loadingGoogle, setLoadingGoogle] = useState(false);
+    const [loadingGithub, setLoadingGithub] = useState(false);
 
     const authClient = createAuthClient();
 
     const signIn = async () => {
-        setLoading(true);
+        setLoadingGoogle(true);
         const { error } = await authClient.signIn.social({
             provider: "google",
             callbackURL: "/dashboard"
@@ -25,9 +26,21 @@ export default function AuthPage() {
 
         if (error) {
             toast.error(error.message || "Google sign-in failed");
-            setLoading(false);
+            setLoadingGoogle(false);
         }
     };
+
+    const signInWithGithub = async () => {
+        setLoadingGithub(true);
+        const { error } = await authClient.signIn.social({
+            provider: "github"
+        })
+
+        if (error) {
+            toast.error(error.message || "Google sign-in failed");
+            setLoadingGoogle(false);
+        }
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -47,9 +60,9 @@ export default function AuthPage() {
                         <CardDescription>Choose your preferred authentication method</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        <Button disabled={loading} onClick={signIn} variant="outline" className="w-full h-11" size="lg">
+                        <Button disabled={loadingGoogle} onClick={signIn} variant="outline" className="w-full h-11" size="lg">
                             {
-                                !loading ? <div className="flex items-center gap-2">
+                                !loadingGoogle ? <div className="flex items-center gap-2">
                                     <FaGoogle />
                                     Continue with Google
                                 </div> : <Spinner />
@@ -62,9 +75,13 @@ export default function AuthPage() {
                             <Separator className="flex-1" />
                         </div>
 
-                        <Button variant="outline" className="w-full h-11" size="lg">
-                            <FaGithub />
-                            Continue with GitHub
+                        <Button disabled={loadingGithub} onClick={signInWithGithub} variant="outline" className="w-full h-11" size="lg">
+                            {
+                                !loadingGithub ? <div className="flex items-center gap-2">
+                                    <FaGithub />
+                                    Continue with GitHub
+                                </div> : <Spinner />
+                            }
                         </Button>
                     </CardContent>
                 </Card>
@@ -77,6 +94,6 @@ export default function AuthPage() {
                 </p>
 
             </div>
-        </div>
+        </div >
     );
 }

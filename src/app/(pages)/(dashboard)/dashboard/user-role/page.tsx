@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,15 +28,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Search, ShieldCheck, Users } from "lucide-react";
-
-const initialUsers = [
-    { id: 1, name: "Ali Hassan", email: "ali@example.com", joinedAt: "2026-05-28", status: "pending", role: "user", avatar: "" },
-    { id: 2, name: "Sara Khan", email: "sara@example.com", joinedAt: "2026-05-29", status: "approved", role: "member", avatar: "" },
-    { id: 3, name: "John Smith", email: "john@example.com", joinedAt: "2026-05-30", status: "pending", role: "user", avatar: "" },
-    { id: 4, name: "Fatima Malik", email: "fatima@example.com", joinedAt: "2026-05-31", status: "approved", role: "admin", avatar: "" },
-    { id: 5, name: "Carlos Rivera", email: "carlos@example.com", joinedAt: "2026-06-01", status: "pending", role: "user", avatar: "" },
-    { id: 6, name: "Aisha Noor", email: "aisha@example.com", joinedAt: "2026-06-01", status: "rejected", role: "user", avatar: "" },
-];
+import { toast } from "sonner";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     approved: "default",
@@ -49,24 +42,63 @@ const roleColors: Record<string, string> = {
     user: "text-zinc-600 bg-zinc-50 border-zinc-200",
 };
 
+type User = {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string;
+    createdAt: string;
+    role: string;
+    approval: string;
+};
+
 export default function AdminUsersPage() {
-    const [users, setUsers] = useState(initialUsers);
+    const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
+    const [savingId, setSavingId] = useState<number | null>(null);
 
-    const filtered = users.filter(
-        (u) =>
-            u.name.toLowerCase().includes(search.toLowerCase()) ||
-            u.email.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const updateUser = (id: number, field: "role" | "status", value: string) => {
-        setUsers((prev) =>
-            prev.map((u) => (u.id === id ? { ...u, [field]: value } : u))
-        );
+    const fetchUsers = async () => {
+        try {
+            const res = await axios.get("/api/user");
+            setUsers(res.data);
+        } catch (err) {
+            toast.error("Failed to fetch users");
+        }
     };
 
-    const totalPending = users.filter((u) => u.status === "pending").length;
-    const totalApproved = users.filter((u) => u.status === "approved").length;
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const updateRole = async (id: number, role: string) => {
+        setSavingId(id);
+        try {
+            await axios.post("/api/auth/verify-user", {
+                userId: String(id),
+                role,
+            });
+        } catch (err) {
+            toast.error("Failed to update role");
+        } finally {
+            setSavingId(null);
+        }
+    };
+
+
+
+    const updateApproval = async (id: number, approval: string) => {
+        setSavingId(id);
+        try {
+            await axios.post("/api/auth/verify-user", {
+                userId: String(id),
+                approval,
+            });
+        } catch (err) {
+            toast.error("Failed to update approval status");
+        } finally {
+            setSavingId(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background ">
@@ -85,9 +117,9 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                         { label: "Total Users", value: users.length, icon: Users },
-                        { label: "Pending", value: totalPending, icon: null },
-                        { label: "Approved", value: totalApproved, icon: null },
-                        { label: "Rejected", value: users.filter((u) => u.status === "rejected").length, icon: null },
+                        { label: "Pending", value: "2", icon: null },
+                        { label: "Approved", value: "3", icon: null },
+                        { label: "Rejected", value: users.filter((u: User) => u.approval === "rejected").length, icon: null },
                     ].map((stat) => (
                         <Card key={stat.label} className="border shadow-none">
                             <CardContent className="pt-4 pb-4">
@@ -98,7 +130,7 @@ export default function AdminUsersPage() {
                     ))}
                 </div>
 
-                <Card className="shadow-none">
+                <Card className="shadow-none pb-1">
                     <CardHeader className="pb-4">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div>
@@ -129,14 +161,14 @@ export default function AdminUsersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filtered.length === 0 ? (
+                                {users.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
                                             No users found
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filtered.map((user) => (
+                                    users.map((user: User) => (
                                         <TableRow key={user.id}>
                                             <TableCell className="pl-6">
                                                 <div className="flex items-center gap-3">
@@ -154,11 +186,15 @@ export default function AdminUsersPage() {
                                             </TableCell>
 
                                             <TableCell className="text-sm text-muted-foreground">
-                                                {new Date(user.joinedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                                                {new Date(user.createdAt).toLocaleDateString()}
                                             </TableCell>
 
                                             <TableCell>
-                                                <Select value={user.role} onValueChange={(val) => updateUser(user.id, "role", val)}>
+                                                <Select
+                                                    value={user.role}
+                                                    onValueChange={(val) => updateRole(user.id, val)}
+                                                    disabled={savingId === user.id}
+                                                >
                                                     <SelectTrigger className={`h-8 w-32 text-xs border font-medium ${roleColors[user.role]}`}>
                                                         <SelectValue />
                                                     </SelectTrigger>
@@ -171,13 +207,17 @@ export default function AdminUsersPage() {
                                             </TableCell>
 
                                             <TableCell>
-                                                <Badge variant={statusVariant[user.status]} className="capitalize text-xs">
-                                                    {user.status}
+                                                <Badge variant={statusVariant[user.approval]} className="capitalize text-xs">
+                                                    {user.approval}
                                                 </Badge>
                                             </TableCell>
 
                                             <TableCell className="pr-6">
-                                                <Select value={user.status} onValueChange={(val) => updateUser(user.id, "status", val)}>
+                                                <Select
+                                                    value={user.approval}
+                                                    onValueChange={(val) => updateApproval(user.id, val)}
+                                                    disabled={savingId === user.id}
+                                                >
                                                     <SelectTrigger className="h-8 w-32 text-xs">
                                                         <SelectValue />
                                                     </SelectTrigger>
