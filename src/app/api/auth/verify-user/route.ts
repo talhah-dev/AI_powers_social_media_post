@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
         if (!session?.user?.id) {
             return Response.json({ error: "Unauthorized" }, { status: 401 });
-        }   
+        }
 
         const adminProfile = await db
             .select()
@@ -20,14 +20,14 @@ export async function POST(request: Request) {
             .limit(1)
             .then((rows) => rows[0] ?? null);
 
-            // adminProfile :  {
-            //     id: 1,
-            //     userId: 'G5GUCaISl72l0PoLejLscKCw2GRVe8Ru',
-            //     role: 'user',
-            //     approval: 'pending',
-            //     createdAt: 2026-06-01T09:05:33.741Z,
-            //     updatedAt: 2026-06-01T09:05:33.741Z
-            //  }
+        // adminProfile :  {
+        //     id: 1,
+        //     userId: 'G5GUCaISl72l0PoLejLscKCw2GRVe8Ru',
+        //     role: 'user',
+        //     approval: 'pending',
+        //     createdAt: 2026-06-01T09:05:33.741Z,
+        //     updatedAt: 2026-06-01T09:05:33.741Z
+        //  }
 
 
         // const adminProfile = (
@@ -42,8 +42,6 @@ export async function POST(request: Request) {
             return Response.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        
-        
         const body = await request.json().catch(() => null);
         const userId = body?.userId as string | undefined;
         const approval = body?.approval as string | undefined;

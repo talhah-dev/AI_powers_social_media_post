@@ -33,7 +33,8 @@ export default function AuthPage() {
     const signInWithGithub = async () => {
         setLoadingGithub(true);
         const { error } = await authClient.signIn.social({
-            provider: "github"
+            provider: "github",
+            callbackURL: "/dashboard"
         })
 
         if (error) {

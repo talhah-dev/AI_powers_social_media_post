@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Search, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     approved: "default",
@@ -56,13 +57,16 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [savingId, setSavingId] = useState<number | null>(null);
+    const [laoding, setLoading] = useState(true);
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get("/api/user");
+            const res = await axios.get("/api/users");
             setUsers(res.data);
+            setLoading(false);
         } catch (err) {
             toast.error("Failed to fetch users");
+            setLoading(false);
         }
     };
 
@@ -149,91 +153,98 @@ export default function AdminUsersPage() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="pl-6">User</TableHead>
-                                    <TableHead>Joined</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="pr-6">Approval</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
-                                            No users found
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    users.map((user: User) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="pl-6">
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="w-8 h-8">
-                                                        <AvatarImage src={user.avatar} />
-                                                        <AvatarFallback className="text-xs font-medium">
-                                                            {user.name.split(" ").map((n) => n[0]).join("")}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="text-sm font-medium leading-none">{user.name}</p>
-                                                        <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell className="text-sm text-muted-foreground">
-                                                {new Date(user.createdAt).toLocaleDateString()}
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <Select
-                                                    value={user.role}
-                                                    onValueChange={(val) => updateRole(user.id, val)}
-                                                    disabled={savingId === user.id}
-                                                >
-                                                    <SelectTrigger className={`h-8 w-32 text-xs border font-medium ${roleColors[user.role]}`}>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="user">User</SelectItem>
-                                                        <SelectItem value="member">Member</SelectItem>
-                                                        <SelectItem value="admin">Admin</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <Badge variant={statusVariant[user.approval]} className="capitalize text-xs">
-                                                    {user.approval}
-                                                </Badge>
-                                            </TableCell>
-
-                                            <TableCell className="pr-6">
-                                                <Select
-                                                    value={user.approval}
-                                                    onValueChange={(val) => updateApproval(user.id, val)}
-                                                    disabled={savingId === user.id}
-                                                >
-                                                    <SelectTrigger className="h-8 w-32 text-xs">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="pending">Pending</SelectItem>
-                                                        <SelectItem value="approved">Approved</SelectItem>
-                                                        <SelectItem value="rejected">Rejected</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
+                    {
+                        !laoding ? (
+                            <CardContent className="p-0">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="pl-6">User</TableHead>
+                                            <TableHead>Joined</TableHead>
+                                            <TableHead>Role</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="pr-6">Approval</TableHead>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {users.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
+                                                    No users found
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            users.map((user: User) => (
+                                                <TableRow key={user.id}>
+                                                    <TableCell className="pl-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="w-8 h-8">
+                                                                <AvatarImage src={user.avatar} />
+                                                                <AvatarFallback className="text-xs font-medium">
+                                                                    {user.name.split(" ").map((n) => n[0]).join("")}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="text-sm font-medium leading-none">{user.name}</p>
+                                                                <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+
+                                                    <TableCell className="text-sm text-muted-foreground">
+                                                        {new Date(user.createdAt).toLocaleDateString()}
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        <Select
+                                                            value={user.role}
+                                                            onValueChange={(val) => updateRole(user.id, val)}
+                                                            disabled={savingId === user.id}
+                                                        >
+                                                            <SelectTrigger className={`h-8 w-32 text-xs border font-medium ${roleColors[user.role]}`}>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="user">User</SelectItem>
+                                                                <SelectItem value="member">Member</SelectItem>
+                                                                <SelectItem value="admin">Admin</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        <Badge variant={statusVariant[user.approval]} className="capitalize text-xs">
+                                                            {user.approval}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    <TableCell className="pr-6">
+                                                        <Select
+                                                            value={user.approval}
+                                                            onValueChange={(val) => updateApproval(user.id, val)}
+                                                            disabled={savingId === user.id}
+                                                        >
+                                                            <SelectTrigger className="h-8 w-32 text-xs">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="pending">Pending</SelectItem>
+                                                                <SelectItem value="approved">Approved</SelectItem>
+                                                                <SelectItem value="rejected">Rejected</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        ) : <div className="flex items-center justify-center h-60">
+                            <Spinner />
+                        </div>
+                    }
+
                 </Card>
 
             </div>
