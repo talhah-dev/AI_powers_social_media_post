@@ -1,10 +1,11 @@
 import { AppSidebar } from '@/components/AppSidebar'
+import { DashboardAccessGuard } from '@/components/DashboardAccessGuard'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import React from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 interface Props {
-    children: React.ReactNode
+    children: ReactNode
 }
 
 export default function layout({ children }: Props) {
@@ -15,22 +16,23 @@ export default function layout({ children }: Props) {
                     {
                         "--sidebar-width": "calc(var(--spacing) * 72)",
                         "--header-height": "calc(var(--spacing) * 12)",
-                    } as React.CSSProperties
+                    } as CSSProperties
                 }
             >
-                <AppSidebar variant="inset" />
-                <SidebarInset>
-                    <SiteHeader />
-                    <div className="flex flex-1 flex-col">
-                        <div className="@container/main flex flex-1 flex-col gap-2">
-                            <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-                                {children}
+                <DashboardAccessGuard>
+                    <AppSidebar variant="inset" />
+                    <SidebarInset>
+                        <SiteHeader />
+                        <div className="flex flex-1 flex-col">
+                            <div className="@container/main flex flex-1 flex-col gap-2">
+                                <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
+                                    {children}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </SidebarInset>
+                    </SidebarInset>
+                </DashboardAccessGuard>
             </SidebarProvider>
-
         </div>
     )
 }

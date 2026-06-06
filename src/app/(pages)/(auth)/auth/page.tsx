@@ -6,22 +6,50 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { createAuthClient } from "better-auth/react";
 import { Zap } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { toast } from "sonner";
+
+const authClient = createAuthClient();
 
 export default function AuthPage() {
 
     const [loadingGoogle, setLoadingGoogle] = useState(false);
     const [loadingGithub, setLoadingGithub] = useState(false);
+    const router = useRouter();
 
-    const authClient = createAuthClient();
+
+    const {
+        data: session,
+        isPending,
+        error,
+    } = authClient.useSession()
+
+    useEffect(() => {
+        if (session) {
+            router.push("/dashboard");
+        }
+    }, [session, router])
+    
+    if (error) {
+        toast.error(error.message);
+        return null;
+    }
+
+    if (isPending) {
+        return <div className="w-full h-screen items-center justify-center flex">
+            <Spinner />
+        </div>
+    }
+
+
 
     const signIn = async () => {
         setLoadingGoogle(true);
         const { error } = await authClient.signIn.social({
             provider: "google",
-            callbackURL: "/dashboard"
+            callbackURL: "/pending-approve"
         });
 
         if (error) {
@@ -34,12 +62,12 @@ export default function AuthPage() {
         setLoadingGithub(true);
         const { error } = await authClient.signIn.social({
             provider: "github",
-            callbackURL: "/dashboard"
+            callbackURL: "/pending-approve"
         })
 
         if (error) {
-            toast.error(error.message || "Google sign-in failed");
-            setLoadingGoogle(false);
+            toast.error(error.message || "github sign-in failed");
+            setLoadingGithub(false);
         }
     }
 

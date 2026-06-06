@@ -55,6 +55,12 @@ type User = {
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState([]);
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalPending: 0,
+        totalApproved: 0,
+        totalRejected: 0
+    });
     const [search, setSearch] = useState("");
     const [savingId, setSavingId] = useState<number | null>(null);
     const [laoding, setLoading] = useState(true);
@@ -62,7 +68,8 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
         try {
             const res = await axios.get("/api/users");
-            setUsers(res.data);
+            setUsers(res.data.users);
+            setStats(res.data.stats);
             setLoading(false);
         } catch (err) {
             toast.error("Failed to fetch users");
@@ -120,10 +127,10 @@ export default function AdminUsersPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
-                        { label: "Total Users", value: users.length, icon: Users },
-                        { label: "Pending", value: "2", icon: null },
-                        { label: "Approved", value: "3", icon: null },
-                        { label: "Rejected", value: users.filter((u: User) => u.approval === "rejected").length, icon: null },
+                        { label: "Total Users", value: stats.totalUsers, icon: Users },
+                        { label: "Pending", value: stats.totalPending, icon: null },
+                        { label: "Approved", value: stats.totalApproved, icon: null },
+                        { label: "Rejected", value: stats.totalRejected, icon: null },
                     ].map((stat) => (
                         <Card key={stat.label} className="border shadow-none">
                             <CardContent className="pt-4 pb-4">
