@@ -1,266 +1,302 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import {
-    CalendarDays,
-    Clock,
-    Hash,
-    ImagePlus,
-    Link2,
-    MapPin,
-    Send,
-    Users,
-    CalendarCheck,
-    Flag,
-} from "lucide-react";
-import { format } from "date-fns";
+import { CalendarCheck, Clock, Send, Sparkles, FileClock } from "lucide-react";
+import { toast } from "sonner";
 
-const platforms = [
-    {
-        id: "instagram",
-        name: "Instagram",
-        connected: true,
-        icon: (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-        ),
-        color: "text-pink-600",
-        bg: "bg-pink-50",
-        border: "border-pink-200",
-        selectedBg: "bg-pink-600",
-    },
-    {
-        id: "linkedin",
-        name: "LinkedIn",
-        connected: true,
-        icon: (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-            </svg>
-        ),
-        color: "text-blue-600",
-        bg: "bg-blue-50",
-        border: "border-blue-200",
-        selectedBg: "bg-blue-600",
-    },
-    {
-        id: "twitter",
-        name: "X (Twitter)",
-        connected: false,
-        icon: (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-        ),
-        color: "text-zinc-700",
-        bg: "bg-zinc-50",
-        border: "border-zinc-200",
-        selectedBg: "bg-zinc-800",
-    },
-    {
-        id: "facebook",
-        name: "Facebook",
-        connected: false,
-        icon: (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-        ),
-        color: "text-blue-700",
-        bg: "bg-blue-50",
-        border: "border-blue-200",
-        selectedBg: "bg-blue-700",
-    },
-];
+type PostStatus = "scheduled" | "published" | "failed";
 
-const flags = ["🇵🇰", "🇺🇸", "🇬🇧", "🇦🇪", "🇮🇳", "🇨🇦", "🇦🇺", "🇩🇪"];
+type DashboardPost = {
+  id: number;
+  platform: string;
+  postType: string;
+  content: string;
+  mediaUrl: string | null;
+  publishNow: boolean;
+  scheduledFor: string | null;
+  status: PostStatus;
+  errorMessage: string | null;
+  zernioPostId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type PostStats = {
+  totalPosts: number;
+  scheduledPosts: number;
+  publishedPosts: number;
+  failedPosts: number;
+};
+
+const initialStats: PostStats = {
+  totalPosts: 0,
+  scheduledPosts: 0,
+  publishedPosts: 0,
+  failedPosts: 0,
+};
 
 export default function SchedulerPage() {
-    const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["instagram"]);
-    const [caption, setCaption] = useState("");
-    const [scheduleEnabled, setScheduleEnabled] = useState(false);
-    const [date, setDate] = useState<Date | undefined>();
-    const [selectedFlag, setSelectedFlag] = useState("🇵🇰");
+  const [caption, setCaption] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [postType, setPostType] = useState<"feed" | "story" | "reel">("feed");
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [stats, setStats] = useState<PostStats>(initialStats);
+  const [posts, setPosts] = useState<DashboardPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-    const togglePlatform = (id: string, connected: boolean) => {
-        if (!connected) return;
-        setSelectedPlatforms((prev) =>
-            prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-        );
-    };
+  const loadPosts = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/api/zernio/posts");
+      setStats(res.data.stats ?? initialStats);
+      setPosts(res.data.posts ?? []);
+    } catch (error) {
+      toast.error("Failed to load scheduled posts");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-background ">
-            <div className=" mx-auto space-y-6">
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-                        <CalendarCheck className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-tight">Post Scheduler</h1>
-                        <p className="text-sm text-muted-foreground">Create and schedule posts across platforms</p>
-                    </div>
-                </div>
+  const handleSubmit = async () => {
+    if (!caption.trim()) {
+      toast.error("Caption is required");
+      return;
+    }
 
-                <Card className="shadow-none">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                            <Flag className="w-4 h-4" /> Select Platforms
-                        </CardTitle>
-                        <CardDescription className="text-xs">Only connected accounts can be selected</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap gap-3">
-                            {platforms.map((p) => {
-                                const isSelected = selectedPlatforms.includes(p.id);
-                                return (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => togglePlatform(p.id, p.connected)}
-                                        disabled={!p.connected}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-150
-                      ${!p.connected ? "opacity-40 cursor-not-allowed bg-muted border-border text-muted-foreground" : ""}
-                      ${p.connected && isSelected ? `${p.selectedBg} text-white border-transparent` : ""}
-                      ${p.connected && !isSelected ? `${p.bg} ${p.border} ${p.color} hover:opacity-80` : ""}
-                    `}
-                                    >
-                                        {p.icon}
-                                        {p.name}
-                                        {!p.connected && (
-                                            <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">Not connected</Badge>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
+    if (!mediaUrl.trim()) {
+      toast.error("Media URL is required");
+      return;
+    }
 
-                <Card className="shadow-none">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                            <ImagePlus className="w-4 h-4" /> Media
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="upload">
-                            <TabsList className="mb-4 w-full">
-                                <TabsTrigger value="upload" className="flex-1">Upload Image</TabsTrigger>
-                                <TabsTrigger value="url" className="flex-1">Paste URL</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="upload">
-                                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-muted/40 transition-colors cursor-pointer">
-                                    <ImagePlus className="w-9 h-9 text-muted-foreground mx-auto mb-3" />
-                                    <p className="text-sm font-medium">Drop image or video here</p>
-                                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG, MP4 · Max 100MB</p>
-                                    <Button variant="outline" size="sm" className="mt-4">Browse Files</Button>
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="url">
-                                <div className="space-y-1.5">
-                                    <Label className="text-sm">Media URL</Label>
-                                    <Input placeholder="https://example.com/image.jpg" />
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </CardContent>
-                </Card>
+    if (scheduleEnabled && !scheduledFor) {
+      toast.error("Please choose a schedule time");
+      return;
+    }
 
-                <Card className="shadow-none">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                            Content
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+    setSaving(true);
+    try {
+      const res = await axios.post("/api/zernio/posts", {
+        content: caption,
+        mediaUrl,
+        postType,
+        publishNow: !scheduleEnabled,
+        scheduledFor: scheduleEnabled ? scheduledFor : null,
+      });
 
-                        <div className="space-y-1.5">
-                            <Label className="text-sm">Caption</Label>
-                            <Textarea
-                                placeholder="Write your caption here..."
-                                className="resize-none min-h-[110px]"
-                                value={caption}
-                                onChange={(e) => setCaption(e.target.value)}
-                            />
-                            <p className="text-xs text-muted-foreground text-right">{caption.length} / 2,200</p>
-                        </div>
-                    </CardContent>
-                </Card>
+      toast.success(res.data?.message ?? (scheduleEnabled ? "Post scheduled" : "Post published"));
+      setCaption("");
+      setMediaUrl("");
+      setPostType("feed");
+      setScheduleEnabled(false);
+      setScheduledFor("");
+      await loadPosts();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ??
+        error?.message ??
+        "Failed to save post";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                <Card className="shadow-none">
-                    <CardHeader className="">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                <Clock className="w-4 h-4" /> Schedule
-                            </CardTitle>
-                            <div className="flex items-center gap-2">
-                                <Label className="text-sm text-muted-foreground">Schedule Post</Label>
-                                <Switch checked={scheduleEnabled} onCheckedChange={setScheduleEnabled} />
-                            </div>
-                        </div>
-                    </CardHeader>
-
-                    {scheduleEnabled && (
-                        <>
-                            <Separator />
-                            <CardContent className="  space-y-4">
-
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Pick a Date</Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-start text-sm font-normal">
-                                                    <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
-                                                    {date ? format(date, "PPP") : "Select a date"}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar mode="single" selected={date} onSelect={setDate}  />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Time</Label>
-                                        <Input type="time" />
-                                    </div>
-                                </div>
-
-                            </CardContent>
-                        </>
-                    )}
-                </Card>
-
-                <div className="flex gap-3 pb-8">
-                    <Button variant="outline" className="flex-1">Save as Draft</Button>
-                    <Button className="flex-1 gap-2">
-                        <Send className="w-4 h-4" />
-                        {scheduleEnabled ? "Schedule Post" : "Publish Now"}
-                    </Button>
-                </div>
-
-            </div>
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+            <CalendarCheck className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Post Scheduler</h1>
+            <p className="text-sm text-muted-foreground">
+              Publish now or schedule a post for later
+            </p>
+          </div>
         </div>
-    );
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="shadow-none">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground">Total Posts</p>
+              <p className="text-2xl font-bold mt-0.5">{stats.totalPosts}</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground">Scheduled</p>
+              <p className="text-2xl font-bold mt-0.5">{stats.scheduledPosts}</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground">Published</p>
+              <p className="text-2xl font-bold mt-0.5">{stats.publishedPosts}</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground">Failed</p>
+              <p className="text-2xl font-bold mt-0.5">{stats.failedPosts}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Create Post
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Use a media URL, add a caption, then publish immediately or schedule it
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Post Type</Label>
+                <Select value={postType} onValueChange={(value) => setPostType(value as typeof postType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose post type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="feed">Feed</SelectItem>
+                    <SelectItem value="story">Story</SelectItem>
+                    <SelectItem value="reel">Reel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Media URL</Label>
+                <Input
+                  placeholder="https://example.com/image.jpg"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Caption</Label>
+              <Textarea
+                placeholder="Write your caption here..."
+                className="min-h-[120px] resize-none"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-xl border p-4">
+              <div>
+                <p className="text-sm font-medium">Schedule Post</p>
+                <p className="text-xs text-muted-foreground">
+                  Turn this on to save the post for later instead of publishing now
+                </p>
+              </div>
+              <Switch checked={scheduleEnabled} onCheckedChange={setScheduleEnabled} />
+            </div>
+
+            {scheduleEnabled && (
+              <div className="space-y-1.5">
+                <Label>Scheduled Date & Time</Label>
+                <Input
+                  type="datetime-local"
+                  value={scheduledFor}
+                  onChange={(e) => setScheduledFor(e.target.value)}
+                />
+              </div>
+            )}
+
+            <Button onClick={handleSubmit} disabled={saving} className="w-full md:w-auto">
+              {saving ? (
+                "Saving..."
+              ) : scheduleEnabled ? (
+                <>
+                  <FileClock className="w-4 h-4 mr-2" />
+                  Schedule Post
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Publish Now
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Recent Posts
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Latest scheduled and published posts from your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading posts...</p>
+            ) : posts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No posts found yet.</p>
+            ) : (
+              posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="flex items-start justify-between gap-4 rounded-xl border p-4"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="capitalize">
+                        {post.status}
+                      </Badge>
+                      <Badge variant="secondary" className="capitalize">
+                        {post.postType}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium line-clamp-1">{post.content}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {post.mediaUrl ? post.mediaUrl : "No media URL"}{" "}
+                      {post.scheduledFor ? `· Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : ""}
+                    </p>
+                    {post.errorMessage ? (
+                      <p className="text-xs text-red-600">{post.errorMessage}</p>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(post.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }

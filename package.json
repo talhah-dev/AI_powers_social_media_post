@@ -11,6 +11,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@tabler/icons-react": "^3.44.0",
+    "@zernio/node": "^0.2.224",
     "axios": "^1.16.1",
     "better-auth": "^1.6.12",
     "class-variance-authority": "^0.7.1",

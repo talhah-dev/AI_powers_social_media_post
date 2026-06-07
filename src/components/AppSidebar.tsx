@@ -56,11 +56,11 @@ const data = {
             url: "/dashboard/user-role",
             icon: Users2,
         },
-        {
-            title: "Demo",
-            url: "/dashboard/demo",
-            icon: Balloon,
-        }
+        // {
+        //     title: "Demo",
+        //     url: "/dashboard/demo",
+        //     icon: Balloon,
+        // }
     ]
 }
 

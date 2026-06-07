@@ -40,7 +40,7 @@ const platforms: PlatformAccount[] = [
         id: 2,
         name: "LinkedIn",
         handle: "Your Brand Inc.",
-        connected: true,
+        connected: false,
         connectedAt: "2026-05-22",
         icon: (
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
